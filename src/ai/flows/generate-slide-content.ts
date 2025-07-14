@@ -29,6 +29,7 @@ const GenerateSlideContentOutputSchema = z.object({
   bodySlides: z.array(z.object({
     heading: z.string().describe('The heading of the slide.'),
     content: z.string().describe('The main content of the slide.'),
+    imagePrompt: z.string().optional().describe('A concise, descriptive prompt for an image generation model that visually represents the slide content. If no image is suitable, this field can be omitted.'),
   })).describe('The content for the body slides.'),
 });
 
@@ -48,7 +49,9 @@ const generateSlideContentPrompt = ai.definePrompt({
   The presentation date is {{presentationDate}} and the topic is {{topic}}.
   The user wants {{slideCount}} slides for the presentation.
 
-  Generate content for the title slide (title and subtitle) and the body slides (heading and content).
+  Generate content for the title slide (title and subtitle) and the body slides (heading, content).
+  For each body slide, also generate a concise, descriptive prompt for an image generation model (like DALL-E) that visually represents the slide content. Store this in the 'imagePrompt' field.
+  If a slide's content doesn't lend itself to a visual representation, you can omit the 'imagePrompt' field for that slide.
   Ensure the content is informative and engaging.
 
   Output the slide content as a JSON object that conforms to the following schema:

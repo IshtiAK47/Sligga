@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,6 +9,7 @@ import {
   generateSlideContent,
   type GenerateSlideContentOutput,
 } from "@/ai/flows/generate-slide-content";
+import { generateImage } from "@/ai/flows/generate-image";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ import {
   Pencil,
   Presentation,
   RefreshCw,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   Carousel,
@@ -65,12 +67,19 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+type SlideWithImage = GenerateSlideContentOutput["bodySlides"][number] & {
+  imageDataUri?: string;
+  isGeneratingImage?: boolean;
+};
+type ContentWithImages = Omit<GenerateSlideContentOutput, "bodySlides"> & {
+  bodySlides: SlideWithImage[];
+};
 
 export default function SlideGeneratorPage() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [generatedContent, setGeneratedContent] =
-    useState<GenerateSlideContentOutput | null>(null);
+    useState<ContentWithImages | null>(null);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template>(
     templates[0]
@@ -99,10 +108,27 @@ export default function SlideGeneratorPage() {
 
   const onSubmit = (values: FormValues) => {
     setFormValues(values);
+    setGeneratedContent(null);
     startTransition(async () => {
       try {
         const result = await generateSlideContent(values);
-        setGeneratedContent(result);
+        const contentWithImageState: ContentWithImages = {
+          ...result,
+          bodySlides: result.bodySlides.map((slide) => ({
+            ...slide,
+            imageDataUri: undefined,
+            isGeneratingImage: false,
+          })),
+        };
+        setGeneratedContent(contentWithImageState);
+        
+        // Kick off image generation after content is set
+        result.bodySlides.forEach((slide, index) => {
+          if (slide.imagePrompt) {
+            generateSlideImage(index, slide.imagePrompt);
+          }
+        });
+
       } catch (error) {
         console.error("Error generating slide content:", error);
         toast({
@@ -113,6 +139,39 @@ export default function SlideGeneratorPage() {
       }
     });
   };
+
+  const generateSlideImage = useCallback(async (index: number, prompt: string) => {
+    setGeneratedContent((prev) => {
+      if (!prev) return null;
+      const newSlides = [...prev.bodySlides];
+      newSlides[index].isGeneratingImage = true;
+      return { ...prev, bodySlides: newSlides };
+    });
+
+    try {
+      const { imageDataUri } = await generateImage({ prompt });
+      setGeneratedContent((prev) => {
+        if (!prev) return null;
+        const newSlides = [...prev.bodySlides];
+        newSlides[index].imageDataUri = imageDataUri;
+        newSlides[index].isGeneratingImage = false;
+        return { ...prev, bodySlides: newSlides };
+      });
+    } catch (error) {
+       console.error(`Error generating image for slide ${index}:`, error);
+       toast({
+         title: "Image Generation Error",
+         description: `Could not create an image for: "${prompt.substring(0,50)}..."`,
+         variant: "destructive",
+       });
+       setGeneratedContent((prev) => {
+        if (!prev) return null;
+        const newSlides = [...prev.bodySlides];
+        newSlides[index].isGeneratingImage = false;
+        return { ...prev, bodySlides: newSlides };
+      });
+    }
+  }, [toast]);
 
   const handleSlideContentChange = (
     index: number,
@@ -164,8 +223,74 @@ export default function SlideGeneratorPage() {
     "text-primary": selectedTemplate.name === "Professional",
     "text-primary": selectedTemplate.name === "Creative", // Uses dark mode primary
   });
+  
+  const renderBodySlide = (slide: SlideWithImage, index: number) => {
+    const hasImage = !!slide.imagePrompt;
 
-  if (isPending) {
+    return (
+      <div className={cn(slidePreviewClasses, 'p-6')}>
+        <EditableField
+          initialValue={slide.heading}
+          onSave={(v) => handleSlideContentChange(index, "heading", v)}
+          viewAs="h3"
+          className={cn(headingClasses, "text-3xl mb-4")}
+        />
+        <div className={cn("flex-1 grid gap-4", hasImage ? "grid-cols-2" : "grid-cols-1")}>
+          <EditableField
+            initialValue={slide.content}
+            onSave={(v) => handleSlideContentChange(index, "content", v)}
+            isTextarea
+            className="text-base"
+          />
+          {hasImage && (
+            <div className="flex flex-col items-center justify-center gap-2">
+              {slide.isGeneratingImage && (
+                <div className="w-full aspect-video bg-muted rounded-md flex flex-col items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground mt-2">Generating image...</p>
+                </div>
+              )}
+              {!slide.isGeneratingImage && slide.imageDataUri && (
+                <>
+                  <Image
+                    src={slide.imageDataUri}
+                    alt={slide.imagePrompt || "Generated image"}
+                    width={400}
+                    height={225}
+                    className="rounded-md object-cover aspect-video"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => generateSlideImage(index, slide.imagePrompt!)}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" /> Regenerate
+                  </Button>
+                </>
+              )}
+               {!slide.isGeneratingImage && !slide.imageDataUri && (
+                 <div className="w-full aspect-video bg-muted/50 border-2 border-dashed rounded-md flex flex-col items-center justify-center text-center p-4">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mt-2">Could not generate image.</p>
+                     <Button
+                        size="sm"
+                        variant="secondary"
+                        className="mt-2"
+                        onClick={() => generateSlideImage(index, slide.imagePrompt!)}
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+                      </Button>
+                 </div>
+               )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+
+  if (isPending && !generatedContent) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-2xl">
@@ -260,7 +385,7 @@ export default function SlideGeneratorPage() {
             <Carousel setApi={setCarouselApi} className="w-full max-w-3xl">
               <CarouselContent>
                 <CarouselItem>
-                  <div className={slidePreviewClasses}>
+                  <div className={cn(slidePreviewClasses, 'justify-center items-center')}>
                     <EditableField
                       initialValue={generatedContent.titleSlide.title}
                       onSave={(v) => handleTitleSlideChange("title", v)}
@@ -278,20 +403,7 @@ export default function SlideGeneratorPage() {
 
                 {generatedContent.bodySlides.map((slide, index) => (
                   <CarouselItem key={index}>
-                    <div className={slidePreviewClasses}>
-                      <EditableField
-                        initialValue={slide.heading}
-                        onSave={(v) => handleSlideContentChange(index, "heading", v)}
-                        viewAs="h3"
-                        className={cn(headingClasses, "text-3xl mb-4")}
-                      />
-                      <EditableField
-                        initialValue={slide.content}
-                        onSave={(v) => handleSlideContentChange(index, "content", v)}
-                        isTextarea
-                        className="text-base flex-1"
-                      />
-                    </div>
+                    {renderBodySlide(slide, index)}
                   </CarouselItem>
                 ))}
               </CarouselContent>

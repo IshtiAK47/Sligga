@@ -1,7 +1,24 @@
 "use client";
 
 import pptxgen from "pptxgenjs";
-import type { GenerateSlideContentOutput } from "@/ai/flows/generate-slide-content";
+
+// Define a more specific type for slide content that includes optional image data
+export interface SlideWithImage {
+  heading: string;
+  content: string;
+  imagePrompt?: string;
+  imageDataUri?: string;
+}
+
+// Update GenerateSlideContentOutput to use the new slide type
+export interface GenerateSlideContentOutput {
+  titleSlide: {
+    title: string;
+    subtitle: string;
+  };
+  bodySlides: SlideWithImage[];
+}
+
 
 export interface Template {
   name: string;
@@ -128,9 +145,20 @@ export const exportToPptx = (
     slide.addText(slideContent.heading, {
       x: 0.5, y: 1.0, w: "90%", h: 0.75, fontSize: 28, bold: true, color: template.colors.primary,
     });
-    slide.addText(slideContent.content, {
-      x: 0.5, y: 2.0, w: "90%", h: 3, fontSize: 16, color: template.colors.text, bullet: {type: 'bullet', code: '2022'},
-    });
+    
+    const hasImage = !!slideContent.imageDataUri;
+    const textWidth = hasImage ? "45%" : "90%";
+    const textOptions: pptxgen.TextPropsOptions = {
+      x: 0.5, y: 2.0, w: textWidth, h: 3, fontSize: 16, color: template.colors.text, bullet: {type: 'bullet', code: '2022'},
+    };
+    slide.addText(slideContent.content, textOptions);
+
+    if (hasImage) {
+        slide.addImage({
+            data: slideContent.imageDataUri,
+            x: 5, y: 2.0, w: 4.5, h: 2.53, sizing: { type: 'contain', w: 4.5, h: 2.53 }
+        });
+    }
   });
 
   ppt.writeFile({ fileName: `${content.titleSlide.title.replace(/ /g, '_')}.pptx` });
