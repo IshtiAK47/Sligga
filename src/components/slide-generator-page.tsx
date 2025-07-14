@@ -36,7 +36,7 @@ import {
   ArrowRight,
   Palette,
   Pencil,
-  FileSlideshow,
+  Presentation,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -197,7 +197,7 @@ export default function SlideGeneratorPage() {
       <div className="min-h-screen flex flex-col">
         <header className="p-4 border-b flex justify-between items-center bg-card">
           <div className="flex items-center gap-2">
-            <FileSlideshow className="h-8 w-8 text-primary" />
+            <Presentation className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold">SlideForge</h1>
           </div>
           <Button onClick={startOver} variant="outline">
@@ -312,7 +312,7 @@ export default function SlideGeneratorPage() {
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-             <FileSlideshow className="h-12 w-12 text-primary"/>
+             <Presentation className="h-12 w-12 text-primary"/>
           </div>
           <CardTitle className="text-3xl font-bold">SlideForge</CardTitle>
           <CardDescription>
