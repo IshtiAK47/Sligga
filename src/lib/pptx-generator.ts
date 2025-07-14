@@ -54,7 +54,7 @@ const professionalTemplate: Template = {
         { rect: { x: 0, y: 5.1, w: "100%", h: 0.5, fill: { color: "79579F" } } },
         {
           text: {
-            text: "SlideForge",
+            text: "Sligga",
             options: { x: 0.5, y: 5.2, w: "90%", align: "right", color: "FFFFFF", fontSize: 12 },
           },
         },
@@ -68,7 +68,7 @@ const professionalTemplate: Template = {
         { rect: { x: 0, y: 0, w: "100%", h: 0.75, fill: { color: "79579F" } } },
         {
           text: {
-            text: "SlideForge Presentation",
+            text: "Sligga Presentation",
             options: { x: 0.5, y: 0, w: "90%", h: 0.75, align: "left", color: "FFFFFF", fontSize: 16, bold: true, valign: 'middle' },
           },
         },
@@ -96,7 +96,7 @@ const creativeTemplate: Template = {
         background: { color: "1A1A1A" },
         objects: [
           { line: { x: 0, y: 2.75, w: "100%", h: 0, line: { color: "9F5779", width: 3 } } },
-          { text: { text: "SlideForge", options: { x: 0.5, y: 5.2, w: "90%", align: "right", color: "9F5779", fontSize: 12 }}},
+          { text: { text: "Sligga", options: { x: 0.5, y: 5.2, w: "90%", align: "right", color: "9F5779", fontSize: 12 }}},
         ],
       });
   
@@ -105,7 +105,7 @@ const creativeTemplate: Template = {
         background: { color: "1A1A1A" },
         objects: [
           { rect: { x: 0, y: 0, w: "100%", h: 0.75, fill: { color: "9F5779" } } },
-          { text: { text: "SlideForge Presentation", options: { x: 0.5, y: 0, w: "90%", h: 0.75, align: "left", color: "FFFFFF", fontSize: 16, bold: true, valign: 'middle' }}},
+          { text: { text: "Sligga Presentation", options: { x: 0.5, y: 0, w: "90%", h: 0.75, align: "left", color: "FFFFFF", fontSize: 16, bold: true, valign: 'middle' }}},
         ],
       });
     },

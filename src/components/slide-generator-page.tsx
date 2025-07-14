@@ -323,7 +323,7 @@ export default function SlideGeneratorPage() {
         <header className="p-4 border-b flex justify-between items-center bg-card">
           <div className="flex items-center gap-2">
             <Presentation className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold">SlideForge</h1>
+            <h1 className="text-2xl font-bold">Sligga</h1>
           </div>
           <Button onClick={startOver} variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" /> Start Over
@@ -426,7 +426,7 @@ export default function SlideGeneratorPage() {
           <div className="flex justify-center mb-4">
              <Presentation className="h-12 w-12 text-primary"/>
           </div>
-          <CardTitle className="text-3xl font-bold">SlideForge</CardTitle>
+          <CardTitle className="text-3xl font-bold">Sligga</CardTitle>
           <CardDescription>
             Tell us about your presentation, and we'll craft the slides for you.
           </CardDescription>

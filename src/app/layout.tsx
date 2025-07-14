@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'SlideForge',
+  title: 'Sligga',
   description: 'Generate presentations with AI',
 };
 
