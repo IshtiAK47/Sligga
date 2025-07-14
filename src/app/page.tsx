@@ -1,3 +1,9 @@
+import SlideGeneratorPage from "@/components/slide-generator-page";
+
 export default function Home() {
-  return <></>;
+  return (
+    <main>
+      <SlideGeneratorPage />
+    </main>
+  );
 }
